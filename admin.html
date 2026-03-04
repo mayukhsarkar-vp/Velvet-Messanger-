@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Velvet Admin — Secure Access</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400&family=DM+Sans:wght@300;400;500;600;700&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --adm-bg:#060910;--adm-surface:#0d1117;--adm-surface2:#161b22;
+  --adm-border:rgba(48,54,61,0.8);--adm-accent:#7c4dff;--adm-accent2:#b89dff;
+  --adm-gold:#f0c87a;--adm-text:#e6edf3;--adm-muted:#8b949e;
+  --adm-danger:#f85149;--adm-success:#56d364;--adm-warn:#d29922;
+  --font-display:'Cormorant Garamond',serif;--font-body:'DM Sans',sans-serif;--font-head:'Playfair Display',serif;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden}
+body{font-family:var(--font-body);background:var(--adm-bg);color:var(--adm-text);overflow:hidden}
+
+/* BG */
+.adm-bg{position:fixed;inset:0;z-index:0;
+  background:radial-gradient(ellipse 50% 60% at 20% 30%,rgba(124,77,255,0.08),transparent 60%),
+             radial-gradient(ellipse 40% 50% at 80% 70%,rgba(48,54,61,0.4),transparent),
+             var(--adm-bg);pointer-events:none}
+
+/* ============================================================
+   LOGIN SCREEN
+============================================================ */
+#adm-login{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(ellipse 80% 80% at 50% 50%,rgba(124,77,255,0.1),transparent 70%),var(--adm-bg)}
+.login-card{background:rgba(13,17,23,0.95);border:1px solid var(--adm-border);
+  border-radius:24px;padding:2.5rem;width:100%;max-width:400px;
+  box-shadow:0 32px 64px rgba(0,0,0,0.7),0 0 0 1px rgba(124,77,255,0.05);
+  animation:fadeIn 0.5s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+.adm-logo{font-family:var(--font-head);font-size:2.5rem;font-weight:800;
+  background:linear-gradient(135deg,#7c4dff,#b89dff);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  text-align:center;margin-bottom:0.2rem}
+.adm-logo-sub{font-size:0.72rem;text-transform:uppercase;letter-spacing:3px;color:var(--adm-muted);text-align:center;margin-bottom:2rem}
+.adm-input{width:100%;background:rgba(255,255,255,0.04);border:1px solid var(--adm-border);
+  border-radius:12px;padding:0.85rem 1rem 0.85rem 3rem;font-family:var(--font-body);font-size:0.9rem;
+  color:var(--adm-text);outline:none;transition:all 0.2s;position:relative;margin-bottom:1rem}
+.adm-input:focus{border-color:var(--adm-accent);background:rgba(124,77,255,0.04);box-shadow:0 0 0 3px rgba(124,77,255,0.1)}
+.adm-input::placeholder{color:var(--adm-muted)}
+.input-wrap{position:relative;margin-bottom:0.8rem}
+.input-icon{position:absolute;left:1rem;top:50%;transform:translateY(-50%);color:var(--adm-muted);font-size:0.95rem;z-index:1}
+.adm-btn{width:100%;padding:0.85rem;border-radius:12px;border:none;
+  background:linear-gradient(135deg,#7c4dff,#b89dff);
+  color:#fff;font-family:var(--font-body);font-size:0.95rem;font-weight:700;cursor:pointer;
+  transition:all 0.2s;box-shadow:0 4px 20px rgba(124,77,255,0.35)}
+.adm-btn:hover{transform:translateY(-1px);box-shadow:0 8px 28px rgba(124,77,255,0.45)}
+.login-hint{font-size:0.72rem;color:var(--adm-muted);text-align:center;margin-top:1rem;line-height:1.6}
+.shake{animation:shake 0.4s ease}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+
+/* ============================================================
+   ADMIN APP
+============================================================ */
+#adm-app{position:fixed;inset:0;z-index:10;display:none}
+.adm-layout{display:grid;grid-template-columns:240px 1fr;height:100vh}
+
+/* NAV */
+.adm-nav{background:var(--adm-surface);border-right:1px solid var(--adm-border);
+  display:flex;flex-direction:column;overflow:hidden}
+.adm-nav-header{padding:1.5rem 1.2rem 1rem;border-bottom:1px solid var(--adm-border)}
+.adm-nav-logo{font-family:var(--font-head);font-size:1.4rem;font-weight:700;
+  background:linear-gradient(135deg,#7c4dff,#b89dff);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.adm-nav-sub{font-size:0.65rem;text-transform:uppercase;letter-spacing:2px;color:var(--adm-muted);margin-top:2px}
+.adm-nav-menu{flex:1;padding:0.8rem 0.6rem;overflow-y:auto}
+.nav-item{display:flex;align-items:center;gap:0.7rem;padding:0.6rem 0.8rem;
+  border-radius:10px;cursor:pointer;color:var(--adm-muted);font-size:0.85rem;font-weight:500;
+  transition:all 0.2s;border:none;background:transparent;width:100%;text-align:left;font-family:var(--font-body)}
+.nav-item:hover{background:rgba(255,255,255,0.04);color:var(--adm-text)}
+.nav-item.active{background:rgba(124,77,255,0.12);color:var(--adm-accent2)}
+.nav-icon{font-size:1rem;flex-shrink:0;width:20px;text-align:center}
+.nav-section-label{font-size:0.65rem;text-transform:uppercase;letter-spacing:2px;
+  color:rgba(139,148,158,0.5);padding:0.8rem 0.8rem 0.3rem;font-weight:600}
+.nav-badge{margin-left:auto;background:var(--adm-accent);color:#fff;border-radius:50px;
+  padding:1px 6px;font-size:0.62rem;font-weight:700}
+
+.adm-nav-footer{padding:1rem;border-top:1px solid var(--adm-border)}
+.adm-logout{display:flex;align-items:center;gap:0.6rem;padding:0.6rem 0.8rem;
+  border-radius:10px;color:var(--adm-danger);font-size:0.83rem;cursor:pointer;
+  transition:background 0.2s;border:none;background:transparent;font-family:var(--font-body)}
+.adm-logout:hover{background:rgba(248,81,73,0.08)}
+
+/* MAIN */
+.adm-main{display:flex;flex-direction:column;overflow:hidden;background:var(--adm-bg)}
+.adm-topbar{display:flex;align-items:center;justify-content:space-between;
+  padding:1rem 2rem;border-bottom:1px solid var(--adm-border);
+  background:rgba(13,17,23,0.8);backdrop-filter:blur(12px);flex-shrink:0}
+.adm-topbar-title{font-size:1rem;font-weight:600;color:var(--adm-text)}
+.adm-topbar-sub{font-size:0.75rem;color:var(--adm-muted)}
+.adm-topbar-right{display:flex;align-items:center;gap:1rem}
+.status-dot{width:8px;height:8px;border-radius:50%;background:var(--adm-success);
+  box-shadow:0 0 6px rgba(86,211,100,0.5);animation:statusPulse 2s ease infinite}
+@keyframes statusPulse{0%,100%{opacity:1}50%{opacity:0.5}}
+.status-label{font-size:0.78rem;color:var(--adm-muted);display:flex;align-items:center;gap:0.4rem}
+
+.adm-content{flex:1;overflow-y:auto;padding:2rem}
+.adm-content::-webkit-scrollbar{width:4px}
+.adm-content::-webkit-scrollbar-thumb{background:rgba(124,77,255,0.2);border-radius:2px}
+
+/* PANELS */
+.adm-panel{display:none}
+.adm-panel.active{display:block}
+
+/* Cards */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:2rem}
+.stat-card{background:var(--adm-surface);border:1px solid var(--adm-border);border-radius:16px;padding:1.3rem;
+  transition:all 0.2s;position:relative;overflow:hidden}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  opacity:0;transition:opacity 0.2s}
+.stat-card:hover::before{opacity:1}
+.stat-card.purple::before{background:linear-gradient(90deg,#7c4dff,#b89dff)}
+.stat-card.green::before{background:linear-gradient(90deg,#56d364,#3fb950)}
+.stat-card.blue::before{background:linear-gradient(90deg,#58a6ff,#79c0ff)}
+.stat-card.amber::before{background:linear-gradient(90deg,#f0c87a,#e3b341)}
+.stat-card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,0.3)}
+.stat-icon{font-size:1.5rem;margin-bottom:0.6rem}
+.stat-num{font-family:var(--font-head);font-size:2rem;font-weight:700;color:var(--adm-text);line-height:1}
+.stat-label{font-size:0.75rem;color:var(--adm-muted);margin-top:0.3rem}
+.stat-change{font-size:0.72rem;margin-top:0.4rem}
+.stat-change.up{color:var(--adm-success)}
+.stat-change.down{color:var(--adm-danger)}
+
+.section-title{font-size:0.9rem;font-weight:700;color:var(--adm-text);margin-bottom:1rem;
+  display:flex;align-items:center;gap:0.5rem}
+.section-title-bar{width:3px;height:16px;background:linear-gradient(to bottom,#7c4dff,#b89dff);border-radius:2px}
+
+/* Table */
+.adm-table-wrap{background:var(--adm-surface);border:1px solid var(--adm-border);border-radius:16px;overflow:hidden;margin-bottom:2rem}
+.adm-table{width:100%;border-collapse:collapse}
+.adm-table th{padding:0.7rem 1rem;font-size:0.72rem;text-transform:uppercase;letter-spacing:1.5px;
+  color:var(--adm-muted);font-weight:600;text-align:left;border-bottom:1px solid var(--adm-border);
+  background:rgba(255,255,255,0.02)}
+.adm-table td{padding:0.75rem 1rem;font-size:0.83rem;border-bottom:1px solid rgba(48,54,61,0.4)}
+.adm-table tr:last-child td{border-bottom:none}
+.adm-table tr:hover td{background:rgba(255,255,255,0.02)}
+.pet-cell{font-size:1.2rem}
+.badge{padding:2px 8px;border-radius:6px;font-size:0.7rem;font-weight:700}
+.badge.online{background:rgba(86,211,100,0.15);color:var(--adm-success)}
+.badge.offline{background:rgba(139,148,158,0.1);color:var(--adm-muted)}
+.badge.active{background:rgba(124,77,255,0.15);color:var(--adm-accent2)}
+.badge.warn{background:rgba(210,153,34,0.15);color:var(--adm-warn)}
+.badge.danger{background:rgba(248,81,73,0.15);color:var(--adm-danger)}
+
+/* Charts (CSS-only bars) */
+.chart-wrap{background:var(--adm-surface);border:1px solid var(--adm-border);border-radius:16px;padding:1.3rem;margin-bottom:2rem}
+.bar-chart{display:flex;align-items:flex-end;gap:0.5rem;height:120px;padding-bottom:1.5rem;position:relative;border-bottom:1px solid var(--adm-border)}
+.bar{flex:1;background:linear-gradient(to top,#7c4dff,#b89dff);border-radius:4px 4px 0 0;
+  min-height:4px;transition:all 0.6s cubic-bezier(0.34,1.56,0.64,1);position:relative;cursor:pointer}
+.bar:hover{background:linear-gradient(to top,#b89dff,#e8b4f8);transform:scaleY(1.05)}
+.bar::after{content:attr(data-val);position:absolute;top:-1.3rem;left:50%;transform:translateX(-50%);
+  font-size:0.65rem;color:var(--adm-muted);white-space:nowrap}
+.bar-labels{display:flex;gap:0.5rem;margin-top:0.3rem}
+.bar-label{flex:1;text-align:center;font-size:0.62rem;color:var(--adm-muted)}
+
+/* Reviews */
+.review-card{background:var(--adm-surface);border:1px solid var(--adm-border);border-radius:14px;padding:1.2rem;margin-bottom:0.8rem;transition:all 0.2s}
+.review-card:hover{border-color:rgba(124,77,255,0.3)}
+.review-top{display:flex;align-items:center;gap:0.7rem;margin-bottom:0.6rem}
+.review-pet{font-size:1.3rem}
+.review-name{font-size:0.88rem;font-weight:600;color:var(--adm-text)}
+.review-id{font-size:0.7rem;color:var(--adm-accent2);font-family:'Courier New',monospace}
+.review-stars{color:var(--adm-gold);font-size:0.8rem;margin-left:auto}
+.review-text{font-size:0.83rem;color:var(--adm-muted);line-height:1.65;font-style:italic}
+.review-date{font-size:0.68rem;color:rgba(139,148,158,0.5);margin-top:0.4rem}
+
+/* Features list */
+.feature-row{display:grid;grid-template-columns:repeat(2,1fr);gap:1rem;margin-bottom:2rem}
+.feature-item{background:var(--adm-surface);border:1px solid var(--adm-border);border-radius:14px;padding:1.2rem;
+  display:flex;gap:0.8rem;align-items:flex-start;transition:all 0.2s}
+.feature-item:hover{border-color:rgba(124,77,255,0.25);transform:translateY(-1px)}
+.feature-ico{font-size:1.5rem;flex-shrink:0}
+.feature-title{font-size:0.88rem;font-weight:600;color:var(--adm-text);margin-bottom:0.3rem}
+.feature-desc{font-size:0.78rem;color:var(--adm-muted);line-height:1.6}
+
+/* Help section */
+.help-card{background:var(--adm-surface);border:1px solid var(--adm-border);border-radius:16px;padding:1.5rem;margin-bottom:1rem}
+.help-title{font-size:0.9rem;font-weight:700;color:var(--adm-text);margin-bottom:0.4rem;display:flex;align-items:center;gap:0.5rem}
+.help-desc{font-size:0.82rem;color:var(--adm-muted);margin-bottom:1rem;line-height:1.6}
+.help-btn{display:inline-flex;align-items:center;gap:0.4rem;
+  padding:0.55rem 1.1rem;border-radius:10px;font-size:0.82rem;font-weight:600;
+  text-decoration:none;border:1px solid var(--adm-border);color:var(--adm-text);
+  transition:all 0.2s;cursor:pointer;background:transparent;font-family:var(--font-body)}
+.help-btn:hover{border-color:var(--adm-accent2);color:var(--adm-accent2);background:rgba(124,77,255,0.06)}
+.help-btn.primary{background:linear-gradient(135deg,#7c4dff,#b89dff);color:#fff;border-color:transparent;box-shadow:0 4px 16px rgba(124,77,255,0.3)}
+.help-btn.primary:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(124,77,255,0.4)}
+.help-btn.wa{background:rgba(37,211,102,0.1);border-color:rgba(37,211,102,0.3);color:#25d366}
+.help-btn.wa:hover{background:rgba(37,211,102,0.2)}
+.help-btn.mail{background:rgba(88,166,255,0.1);border-color:rgba(88,166,255,0.3);color:#58a6ff}
+.help-btn.mail:hover{background:rgba(88,166,255,0.2)}
+
+/* Settings */
+.settings-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.5rem}
+.settings-card{background:var(--adm-surface);border:1px solid var(--adm-border);border-radius:14px;padding:1.2rem}
+.settings-label{font-size:0.72rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--adm-muted);margin-bottom:0.8rem}
+.settings-val{font-size:0.9rem;font-weight:600;color:var(--adm-text)}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:0.6rem 0;border-bottom:1px solid rgba(48,54,61,0.4)}
+.toggle-row:last-child{border:none}
+.toggle-label{font-size:0.85rem;color:var(--adm-text)}
+.toggle-sub{font-size:0.72rem;color:var(--adm-muted)}
+.toggle{width:36px;height:20px;border-radius:20px;background:rgba(255,255,255,0.1);
+  cursor:pointer;transition:background 0.2s;position:relative;flex-shrink:0;border:none}
+.toggle.on{background:linear-gradient(135deg,#7c4dff,#b89dff)}
+.toggle::after{content:'';position:absolute;top:2px;left:2px;width:16px;height:16px;
+  border-radius:50%;background:#fff;transition:transform 0.2s;box-shadow:0 1px 3px rgba(0,0,0,0.3)}
+.toggle.on::after{transform:translateX(16px)}
+
+/* About */
+.about-hero{background:linear-gradient(135deg,rgba(124,77,255,0.1),rgba(232,180,248,0.05));
+  border:1px solid rgba(124,77,255,0.2);border-radius:20px;padding:2rem;text-align:center;margin-bottom:2rem}
+.about-logo{font-family:var(--font-head);font-size:3rem;font-weight:800;
+  background:linear-gradient(135deg,#7c4dff,#b89dff,#f0c87a);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:0.4rem}
+.about-tagline{font-family:var(--font-display);font-size:1.1rem;font-style:italic;color:var(--adm-muted);margin-bottom:1rem}
+.about-founder{font-size:0.82rem;color:var(--adm-muted);line-height:1.7}
+.about-founder strong{color:var(--adm-accent2)}
+
+/* Activity feed */
+.activity-item{display:flex;gap:0.8rem;padding:0.7rem 0;border-bottom:1px solid rgba(48,54,61,0.4)}
+.activity-item:last-child{border:none}
+.activity-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:5px}
+.activity-dot.purple{background:var(--adm-accent)}
+.activity-dot.green{background:var(--adm-success)}
+.activity-dot.amber{background:var(--adm-warn)}
+.activity-dot.red{background:var(--adm-danger)}
+.activity-text{font-size:0.82rem;color:var(--adm-text);line-height:1.5}
+.activity-time{font-size:0.68rem;color:var(--adm-muted);margin-top:2px}
+
+/* Notification banner */
+.notif-banner{background:rgba(124,77,255,0.08);border:1px solid rgba(124,77,255,0.2);
+  border-radius:12px;padding:0.8rem 1rem;display:flex;align-items:center;gap:0.8rem;
+  margin-bottom:1.5rem;animation:fadeIn 0.4s ease}
+.notif-icon{font-size:1.1rem}
+.notif-text{font-size:0.82rem;color:var(--adm-text);flex:1;line-height:1.5}
+.notif-close{background:transparent;border:none;color:var(--adm-muted);cursor:pointer;font-size:0.9rem;padding:2px}
+.notif-close:hover{color:var(--adm-danger)}
+
+/* Why Velvet */
+.why-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:2rem}
+.why-card{background:var(--adm-surface);border:1px solid var(--adm-border);border-radius:16px;padding:1.3rem;
+  text-align:center;transition:all 0.2s}
+.why-card:hover{border-color:rgba(124,77,255,0.3);transform:translateY(-2px)}
+.why-icon{font-size:2rem;margin-bottom:0.6rem}
+.why-title{font-size:0.88rem;font-weight:700;color:var(--adm-text);margin-bottom:0.4rem}
+.why-desc{font-size:0.78rem;color:var(--adm-muted);line-height:1.6}
+</style>
+</head>
+<body>
+<div class="adm-bg"></div>
+
+<!-- ============================================================
+     ADMIN LOGIN
+============================================================ -->
+<div id="adm-login">
+  <div class="login-card" id="login-card">
+    <div class="adm-logo">Velvet</div>
+    <div class="adm-logo-sub">Admin Control Panel</div>
+    <p style="font-size:0.78rem;color:var(--adm-muted);text-align:center;margin-bottom:1.5rem;line-height:1.6">
+      🔒 Restricted access. Authorized personnel only.<br/>Enter your admin access code to continue.
+    </p>
+    <div class="input-wrap">
+      <span class="input-icon">⬡</span>
+      <input class="adm-input" id="admin-code" type="password" placeholder="Admin access code" onkeydown="if(event.key==='Enter')tryLogin()"/>
+    </div>
+    <button class="adm-btn" onclick="tryLogin()">→ Access Admin Panel</button>
+    <div class="login-hint">
+      Contact <a href="mailto:mayukhsarkar1319@gmail.com" style="color:var(--adm-accent2);text-decoration:none">mayukhsarkar1319@gmail.com</a> if you've lost access.<br/>
+      Velvet Pages · Founder: Mayukh Sarkar
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     ADMIN APP
+============================================================ -->
+<div id="adm-app">
+  <div class="adm-layout">
+
+    <!-- SIDEBAR NAV -->
+    <nav class="adm-nav">
+      <div class="adm-nav-header">
+        <div class="adm-nav-logo">Velvet</div>
+        <div class="adm-nav-sub">Admin Panel</div>
+      </div>
+      <div class="adm-nav-menu">
+        <div class="nav-section-label">Overview</div>
+        <button class="nav-item active" onclick="showPanel('dashboard',this)"><span class="nav-icon">⬡</span> Dashboard</button>
+        <button class="nav-item" onclick="showPanel('users',this)"><span class="nav-icon">◎</span> Users <span class="nav-badge" id="user-badge">0</span></button>
+        <button class="nav-item" onclick="showPanel('activity',this)"><span class="nav-icon">⋆</span> Activity</button>
+
+        <div class="nav-section-label">Content</div>
+        <button class="nav-item" onclick="showPanel('reviews',this)"><span class="nav-icon">✦</span> Reviews <span class="nav-badge" id="review-badge">0</span></button>
+        <button class="nav-item" onclick="showPanel('features',this)"><span class="nav-icon">◈</span> Features</button>
+        <button class="nav-item" onclick="showPanel('why',this)"><span class="nav-icon">∞</span> Why Velvet</button>
+
+        <div class="nav-section-label">System</div>
+        <button class="nav-item" onclick="showPanel('settings',this)"><span class="nav-icon">⌘</span> Settings</button>
+        <button class="nav-item" onclick="showPanel('help',this)"><span class="nav-icon">?</span> Help & Support</button>
+        <button class="nav-item" onclick="showPanel('about',this)"><span class="nav-icon">◇</span> About</button>
+      </div>
+      <div class="adm-nav-footer">
+        <div style="font-size:0.72rem;color:var(--adm-muted);margin-bottom:0.5rem;padding:0 0.8rem">
+          Logged in as <strong style="color:var(--adm-accent2)">Mayukh Sarkar</strong>
+        </div>
+        <button class="adm-logout" onclick="logout()">⬡ Sign Out</button>
+      </div>
+    </nav>
+
+    <!-- MAIN CONTENT -->
+    <div class="adm-main">
+      <div class="adm-topbar">
+        <div>
+          <div class="adm-topbar-title" id="panel-title">Dashboard</div>
+          <div class="adm-topbar-sub" id="panel-sub">Velvet — System Overview</div>
+        </div>
+        <div class="adm-topbar-right">
+          <div class="status-label"><div class="status-dot"></div>All systems operational</div>
+          <span style="font-size:0.75rem;color:var(--adm-muted)" id="live-time"></span>
+        </div>
+      </div>
+
+      <div class="adm-content">
+
+        <!-- ── DASHBOARD ── -->
+        <div class="adm-panel active" id="panel-dashboard">
+          <div class="notif-banner">
+            <span class="notif-icon">✦</span>
+            <div class="notif-text">Welcome back, <strong>Mayukh</strong>. 3 new user reviews and 47 new registrations since your last login.</div>
+            <button class="notif-close" onclick="this.parentElement.remove()">✕</button>
+          </div>
+          <div class="stats-row">
+            <div class="stat-card purple">
+              <div class="stat-icon">◎</div>
+              <div class="stat-num" id="dash-users">1,247</div>
+              <div class="stat-label">Total Users</div>
+              <div class="stat-change up">↑ 47 today</div>
+            </div>
+            <div class="stat-card green">
+              <div class="stat-icon">⋆</div>
+              <div class="stat-num">389</div>
+              <div class="stat-label">Active Now</div>
+              <div class="stat-change up">↑ 12% vs yesterday</div>
+            </div>
+            <div class="stat-card blue">
+              <div class="stat-icon">💬</div>
+              <div class="stat-num">8,402</div>
+              <div class="stat-label">Messages Today</div>
+              <div class="stat-change up">↑ 2,100 vs avg</div>
+            </div>
+            <div class="stat-card amber">
+              <div class="stat-icon">⊛</div>
+              <div class="stat-num">142</div>
+              <div class="stat-label">Active Groups</div>
+              <div class="stat-change up">↑ 8 new today</div>
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:2fr 1fr;gap:1.5rem;margin-bottom:2rem">
+            <div class="chart-wrap">
+              <div class="section-title"><div class="section-title-bar"></div>User Registrations (Last 7 Days)</div>
+              <div class="bar-chart" id="reg-chart">
+                <!-- Bars filled by JS -->
+              </div>
+              <div class="bar-labels" id="reg-labels"></div>
+            </div>
+            <div class="chart-wrap">
+              <div class="section-title"><div class="section-title-bar"></div>Top Pets Chosen</div>
+              <div id="pet-stats" style="display:flex;flex-direction:column;gap:0.5rem;margin-top:0.5rem">
+                <!-- Filled by JS -->
+              </div>
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem">
+            <div>
+              <div class="section-title"><div class="section-title-bar"></div>Recent Activity</div>
+              <div style="background:var(--adm-surface);border:1px solid var(--adm-border);border-radius:14px;padding:1rem" id="dash-activity"></div>
+            </div>
+            <div>
+              <div class="section-title"><div class="section-title-bar"></div>Latest Reviews</div>
+              <div id="dash-reviews"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── USERS ── -->
+        <div class="adm-panel" id="panel-users">
+          <div class="stats-row" style="grid-template-columns:repeat(3,1fr)">
+            <div class="stat-card purple"><div class="stat-icon">◎</div><div class="stat-num">1,247</div><div class="stat-label">Total Registered</div></div>
+            <div class="stat-card green"><div class="stat-icon">⋆</div><div class="stat-num">389</div><div class="stat-label">Online Now</div></div>
+            <div class="stat-card amber"><div class="stat-icon">⬡</div><div class="stat-num">23</div><div class="stat-label">Flagged Accounts</div></div>
+          </div>
+          <div class="section-title"><div class="section-title-bar"></div>Registered Users</div>
+          <div class="adm-table-wrap">
+            <table class="adm-table">
+              <thead><tr><th>Pet</th><th>Display Name</th><th>Velvet Code</th><th>Joined</th><th>Status</th><th>Messages</th></tr></thead>
+              <tbody id="users-table-body"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ── ACTIVITY ── -->
+        <div class="adm-panel" id="panel-activity">
+          <div class="section-title"><div class="section-title-bar"></div>Live Activity Feed</div>
+          <div style="background:var(--adm-surface);border:1px solid var(--adm-border);border-radius:16px;padding:1.2rem" id="full-activity">
+          </div>
+        </div>
+
+        <!-- ── REVIEWS ── -->
+        <div class="adm-panel" id="panel-reviews">
+          <div class="stats-row" style="grid-template-columns:repeat(3,1fr)">
+            <div class="stat-card purple"><div class="stat-icon">✦</div><div class="stat-num">4.8</div><div class="stat-label">Average Rating</div></div>
+            <div class="stat-card green"><div class="stat-icon">◎</div><div class="stat-num" id="review-count">47</div><div class="stat-label">Total Reviews</div></div>
+            <div class="stat-card amber"><div class="stat-icon">⋆</div><div class="stat-num">94%</div><div class="stat-label">Positive</div></div>
+          </div>
+          <div class="section-title"><div class="section-title-bar"></div>User Reviews</div>
+          <div id="reviews-list"></div>
+        </div>
+
+        <!-- ── FEATURES ── -->
+        <div class="adm-panel" id="panel-features">
+          <div class="section-title"><div class="section-title-bar"></div>Velvet Feature Highlights</div>
+          <div class="feature-row" id="features-list"></div>
+        </div>
+
+        <!-- ── WHY VELVET ── -->
+        <div class="adm-panel" id="panel-why">
+          <div class="section-title"><div class="section-title-bar"></div>Why Choose Velvet?</div>
+          <div class="why-grid" id="why-grid"></div>
+          <div style="background:var(--adm-surface);border:1px solid var(--adm-border);border-radius:16px;padding:1.5rem">
+            <div class="section-title" style="margin-bottom:1rem"><div class="section-title-bar"></div>Our Vision</div>
+            <p style="font-size:0.88rem;color:var(--adm-muted);line-height:1.8;max-width:700px">
+              Velvet was born from a simple belief: <em style="color:var(--adm-text)">privacy should be effortless, and beauty should be standard.</em>
+              In a world where every messaging app demands your phone number, your email, your identity — Velvet asks for nothing but your desire to connect.
+              A 5–7 digit code is all you need. No data harvesting. No profiling. No compromise.
+            </p>
+            <p style="font-size:0.88rem;color:var(--adm-muted);line-height:1.8;max-width:700px;margin-top:1rem">
+              Built by <strong style="color:var(--adm-accent2)">Velvet Pages</strong>, with years of effort poured into every pixel, every animation, every encrypted byte.
+              Founded by <strong style="color:var(--adm-accent2)">Mayukh Sarkar</strong>, Velvet is not just an app — it's a philosophy.
+            </p>
+          </div>
+        </div>
+
+        <!-- ── SETTINGS ── -->
+        <div class="adm-panel" id="panel-settings">
+          <div class="settings-row">
+            <div class="settings-card">
+              <div class="settings-label">Platform Status</div>
+              <div class="settings-val" style="color:var(--adm-success)">● Operational</div>
+            </div>
+            <div class="settings-card">
+              <div class="settings-label">Encryption</div>
+              <div class="settings-val">AES-256 E2EE ✓</div>
+            </div>
+            <div class="settings-card">
+              <div class="settings-label">Version</div>
+              <div class="settings-val">Velvet v1.0.0</div>
+            </div>
+            <div class="settings-card">
+              <div class="settings-label">Founded</div>
+              <div class="settings-val">Velvet Pages</div>
+            </div>
+          </div>
+          <div style="background:var(--adm-surface);border:1px solid var(--adm-border);border-radius:16px;padding:1.3rem;margin-bottom:1.5rem">
+            <div class="section-title" style="margin-bottom:1rem"><div class="section-title-bar"></div>Platform Toggles</div>
+            <div class="toggle-row"><div><div class="toggle-label">Maintenance Mode</div><div class="toggle-sub">Disables new logins and shows maintenance page</div></div><button class="toggle" onclick="this.classList.toggle('on')"></button></div>
+            <div class="toggle-row"><div><div class="toggle-label">New Registrations</div><div class="toggle-sub">Allow new Velvet codes to be generated</div></div><button class="toggle on" onclick="this.classList.toggle('on')"></button></div>
+            <div class="toggle-row"><div><div class="toggle-label">Group Creation</div><div class="toggle-sub">Allow users to create new groups</div></div><button class="toggle on" onclick="this.classList.toggle('on')"></button></div>
+            <div class="toggle-row"><div><div class="toggle-label">Media Sharing</div><div class="toggle-sub">Allow images, videos, and documents in chats</div></div><button class="toggle on" onclick="this.classList.toggle('on')"></button></div>
+            <div class="toggle-row"><div><div class="toggle-label">Games Feature</div><div class="toggle-sub">Enable in-chat games for all users</div></div><button class="toggle on" onclick="this.classList.toggle('on')"></button></div>
+            <div class="toggle-row"><div><div class="toggle-label">Content Moderation</div><div class="toggle-sub">Auto-flag suspicious message patterns</div></div><button class="toggle on" onclick="this.classList.toggle('on')"></button></div>
+          </div>
+        </div>
+
+        <!-- ── HELP ── -->
+        <div class="adm-panel" id="panel-help">
+          <div class="help-card">
+            <div class="help-title">📚 Documentation & FAQ</div>
+            <div class="help-desc">Find answers to common questions, technical documentation, and user guides for Velvet platform administrators.</div>
+            <button class="help-btn primary">Open Docs ↗</button>
+          </div>
+          <div class="help-card">
+            <div class="help-title">💬 Contact Support via WhatsApp</div>
+            <div class="help-desc">For urgent issues, reach the Velvet support team directly via WhatsApp. Response time: usually within 1 hour.</div>
+            <a href="https://wa.me/917029043459" target="_blank" class="help-btn wa">💬 WhatsApp: +91 70290 43459</a>
+          </div>
+          <div class="help-card">
+            <div class="help-title">📧 Email Support</div>
+            <div class="help-desc">For detailed reports, bug submissions, or partnership inquiries, send an email to the Velvet Pages team.</div>
+            <a href="mailto:mayukhsarkar1319@gmail.com" class="help-btn mail">✉ mayukhsarkar1319@gmail.com</a>
+          </div>
+          <div class="help-card">
+            <div class="help-title">🔑 Lost Admin Access?</div>
+            <div class="help-desc">If you've lost your admin code, contact Mayukh Sarkar directly via WhatsApp or email with your identity verification.</div>
+            <div style="display:flex;gap:0.8rem;flex-wrap:wrap">
+              <a href="https://wa.me/917029043459" target="_blank" class="help-btn wa">💬 WhatsApp</a>
+              <a href="mailto:mayukhsarkar1319@gmail.com" class="help-btn mail">✉ Email</a>
+            </div>
+          </div>
+          <div class="help-card">
+            <div class="help-title">🐛 Report a Bug</div>
+            <div class="help-desc">Found an issue in the admin panel or user app? Document it with screenshots and send it to the development team.</div>
+            <a href="mailto:mayukhsarkar1319@gmail.com?subject=Velvet Bug Report" class="help-btn primary">Report Bug ↗</a>
+          </div>
+        </div>
+
+        <!-- ── ABOUT ── -->
+        <div class="adm-panel" id="panel-about">
+          <div class="about-hero">
+            <div class="about-logo">Velvet</div>
+            <div class="about-tagline">Private. Elegant. Yours.</div>
+            <div class="about-founder">
+              Built by <strong>Velvet Pages</strong> · Founder <strong>Mayukh Sarkar</strong><br/>
+              Years of effort. Every pixel. Every animation. Every encrypted byte.<br/>
+              <span style="opacity:0.6;font-size:0.78rem">Version 1.0.0 · Admin Panel</span>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem">
+            <div class="help-card">
+              <div class="help-title">📬 Contact Founder</div>
+              <div class="help-desc">Mayukh Sarkar — Founder & Lead Developer, Velvet Pages</div>
+              <div style="display:flex;gap:0.8rem;flex-wrap:wrap">
+                <a href="https://wa.me/917029043459" target="_blank" class="help-btn wa">💬 WhatsApp</a>
+                <a href="mailto:mayukhsarkar1319@gmail.com" class="help-btn mail">✉ Email</a>
+              </div>
+            </div>
+            <div class="help-card">
+              <div class="help-title">⚖ Legal & Privacy</div>
+              <div class="help-desc">Velvet collects zero personal data. All messages are end-to-end encrypted. No phone number, email, or identity is required.</div>
+              <button class="help-btn primary">Privacy Policy ↗</button>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /adm-content -->
+    </div><!-- /adm-main -->
+  </div><!-- /adm-layout -->
+</div><!-- /adm-app -->
+
+<script>
+/* ============================================================
+   ADMIN DATA
+============================================================ */
+const ADMIN_CODE = 'VELVET2024'; // Default access code
+
+const MOCK_USERS = [
+  {pet:'🦋',name:'Aria Moonstone',code:'384729',joined:'2 days ago',status:'online',msgs:847},
+  {pet:'🦄',name:'Kai Stardust',code:'571930',joined:'5 days ago',status:'online',msgs:312},
+  {pet:'🦊',name:'Ember Wilds',code:'293847',joined:'1 week ago',status:'offline',msgs:1203},
+  {pet:'🐺',name:'Nova Skye',code:'839201',joined:'2 weeks ago',status:'online',msgs:523},
+  {pet:'🦚',name:'Luna Drift',code:'102938',joined:'3 weeks ago',status:'offline',msgs:91},
+  {pet:'🐉',name:'Echo Flame',code:'748392',joined:'1 month ago',status:'online',msgs:2041},
+  {pet:'🦜',name:'Sage River',code:'502938',joined:'1 month ago',status:'offline',msgs:156},
+  {pet:'🐻',name:'Atlas Cloud',code:'837465',joined:'2 months ago',status:'online',msgs:678},
+];
+
+const MOCK_REVIEWS = [
+  {pet:'🦋',name:'Aria Moonstone',id:'384729',stars:5,text:'Velvet is genuinely the most beautiful messaging app I\'ve ever used. The animations are silky smooth and the whole vibe is just — *chef\'s kiss*. No more sharing my number with random people.',date:'2 hours ago'},
+  {pet:'🦄',name:'Kai Stardust',id:'571930',stars:5,text:'Finally! An app that respects my privacy without being ugly or complicated. The pet system is adorable and my friends love their unique codes. The games are a fun bonus.',date:'1 day ago'},
+  {pet:'🐉',name:'Echo Flame',id:'748392',stars:5,text:'Been using Velvet for a month. The font options, custom backgrounds, and animated typos make every conversation feel unique. This is how messaging should be.',date:'3 days ago'},
+  {pet:'🦊',name:'Ember Wilds',id:'293847',stars:4,text:'Love the concept and execution. The Velvet code system is genius — no one can spam me unless I give them my code. The interface is absolutely stunning.',date:'5 days ago'},
+  {pet:'🦚',name:'Luna Drift',id:'102938',stars:5,text:'Honestly didn\'t expect to love a messaging app this much. The dark theme with purple accents is gorgeous. Highly recommend to anyone who values privacy.',date:'1 week ago'},
+];
+
+const MOCK_FEATURES = [
+  {ico:'🔒',title:'End-to-End Encryption',desc:'Every message, photo, video, and document is AES-256 encrypted. Only you and your recipient can read your conversations.'},
+  {ico:'⬡',title:'Zero Identity Required',desc:'No phone number. No email. No personal data. Just a unique 5–7 digit Velvet code. That\'s all you need.'},
+  {ico:'🐾',title:'Pet Companion System',desc:'Choose your spirit animal from 25+ pets. Your pet becomes your identity — visible to everyone who connects with you.'},
+  {ico:'🎨',title:'Custom Backgrounds',desc:'Personalize your chat space with preset themes, solid colors, custom gradients, or your own uploaded images.'},
+  {ico:'✦',title:'Animated Typos & Symbols',desc:'Express yourself beyond words with a unique library of animated typographic symbols and custom emoticons.'},
+  {ico:'🎮',title:'In-Chat Games',desc:'Play Tic-Tac-Toe, Rock-Paper-Scissors, Truth or Dare, and Word Guess right inside your conversation.'},
+  {ico:'📝',title:'Multiple Font Styles',desc:'Switch between Default, Serif, Elegant, Mono, Italic, and Light fonts for every message you send.'},
+  {ico:'👥',title:'Group Chats',desc:'Create groups, add members by Velvet code, set a group icon, and manage your community privately.'},
+];
+
+const WHY_VELVET = [
+  {icon:'🛡️',title:'True Privacy',desc:'No data collection. No phone number. No email. Your identity is yours alone — protected by design.'},
+  {icon:'✨',title:'Unmatched Aesthetics',desc:'Every screen, every transition, every micro-interaction is crafted with luxury and elegance in mind.'},
+  {icon:'🌍',title:'Universal Access',desc:'Works on any device with a browser. No app download. No registration barrier. Just connect.'},
+  {icon:'🔐',title:'Military-Grade Security',desc:'AES-256 end-to-end encryption on all messages, media, and group chats. Zero server-side storage.'},
+  {icon:'🎭',title:'Self-Expression',desc:'Custom pets, fonts, backgrounds, typos, reactions — Velvet is as unique as you are.'},
+  {icon:'💎',title:'Built to Last',desc:'Years of effort from Velvet Pages. Designed with care, refined with passion, built for the long term.'},
+];
+
+const ACTIVITY_FEED = [
+  {color:'purple',text:'New user <strong>#938472</strong> (🦋) joined Velvet',time:'2 min ago'},
+  {color:'green',text:'User <strong>#384729</strong> sent a connection request',time:'5 min ago'},
+  {color:'purple',text:'Group "Night Owls 🦉" created with 4 members',time:'12 min ago'},
+  {color:'amber',text:'User <strong>#102938</strong> changed their pet companion',time:'18 min ago'},
+  {color:'green',text:'New review submitted — 5 stars ⭐',time:'24 min ago'},
+  {color:'purple',text:'New user <strong>#571930</strong> (🦄) joined Velvet',time:'31 min ago'},
+  {color:'amber',text:'User <strong>#748392</strong> updated their profile background',time:'45 min ago'},
+  {color:'green',text:'Connection request accepted between <strong>#384729</strong> ↔ <strong>#293847</strong>',time:'1h ago'},
+  {color:'red',text:'Failed login attempt on admin panel (3 tries)',time:'2h ago'},
+  {color:'purple',text:'New user <strong>#837465</strong> (🐻) joined Velvet',time:'3h ago'},
+];
+
+const REG_DATA = [180,245,312,198,401,356,289];
+const REG_DAYS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+const PET_TOP = [['🦋','Butterfly','18%'],['🦄','Unicorn','14%'],['🦊','Fox','12%'],['🐉','Dragon','10%'],['🐺','Wolf','9%']];
+
+/* ============================================================
+   LOGIN
+============================================================ */
+function tryLogin(){
+  const val = document.getElementById('admin-code').value;
+  if(val === ADMIN_CODE || val.toLowerCase() === 'velvet2024'){
+    document.getElementById('adm-login').style.display='none';
+    document.getElementById('adm-app').style.display='block';
+    initAdminApp();
+  } else {
+    const card=document.getElementById('login-card');
+    card.classList.add('shake');
+    setTimeout(()=>card.classList.remove('shake'),500);
+    document.getElementById('admin-code').style.borderColor='var(--adm-danger)';
+    setTimeout(()=>document.getElementById('admin-code').style.borderColor='',1500);
+  }
+}
+document.getElementById('admin-code').addEventListener('keydown',e=>{if(e.key==='Enter')tryLogin();});
+
+function logout(){
+  document.getElementById('adm-app').style.display='none';
+  document.getElementById('adm-login').style.display='flex';
+  document.getElementById('admin-code').value='';
+}
+
+/* ============================================================
+   PANEL SWITCHING
+============================================================ */
+const PANEL_META={
+  dashboard:{title:'Dashboard',sub:'Velvet — System Overview'},
+  users:{title:'Users',sub:'Registered Velvet accounts'},
+  activity:{title:'Activity Feed',sub:'Real-time platform events'},
+  reviews:{title:'User Reviews',sub:'Feedback from the Velvet community'},
+  features:{title:'Features',sub:'What makes Velvet special'},
+  why:{title:'Why Velvet?',sub:'Our vision and values'},
+  settings:{title:'Settings',sub:'Platform configuration'},
+  help:{title:'Help & Support',sub:'Get assistance anytime'},
+  about:{title:'About',sub:'Velvet Pages · Mayukh Sarkar'},
+};
+function showPanel(name,el){
+  document.querySelectorAll('.adm-panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('panel-'+name).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  el.classList.add('active');
+  const m=PANEL_META[name];
+  document.getElementById('panel-title').textContent=m.title;
+  document.getElementById('panel-sub').textContent=m.sub;
+}
+
+/* ============================================================
+   INIT
+============================================================ */
+function initAdminApp(){
+  renderRegChart();renderPetStats();renderDashActivity();renderDashReviews();
+  renderUsersTable();renderFullActivity();renderReviews();renderFeatures();renderWhy();
+  document.getElementById('user-badge').textContent=MOCK_USERS.length;
+  document.getElementById('review-badge').textContent=MOCK_REVIEWS.length;
+  document.getElementById('review-count').textContent=MOCK_REVIEWS.length;
+  updateClock();setInterval(updateClock,1000);
+}
+
+function updateClock(){
+  const d=new Date();
+  document.getElementById('live-time').textContent=d.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}
+
+function renderRegChart(){
+  const chart=document.getElementById('reg-chart');const labels=document.getElementById('reg-labels');
+  chart.innerHTML='';labels.innerHTML='';
+  const max=Math.max(...REG_DATA);
+  REG_DATA.forEach((v,i)=>{
+    const bar=document.createElement('div');bar.className='bar';
+    bar.style.height='0px';bar.dataset.val=v;
+    chart.appendChild(bar);
+    setTimeout(()=>{bar.style.height=Math.round((v/max)*100)+'px';},100+i*80);
+    const lbl=document.createElement('div');lbl.className='bar-label';lbl.textContent=REG_DAYS[i];
+    labels.appendChild(lbl);
+  });
+}
+
+function renderPetStats(){
+  const el=document.getElementById('pet-stats');el.innerHTML='';
+  PET_TOP.forEach(([pet,name,pct])=>{
+    const pctNum=parseInt(pct);
+    el.innerHTML+=`<div style="display:flex;align-items:center;gap:0.5rem;font-size:0.8rem">
+      <span style="font-size:1rem">${pet}</span>
+      <span style="color:var(--adm-text);width:70px">${name}</span>
+      <div style="flex:1;background:rgba(255,255,255,0.06);border-radius:4px;height:6px;overflow:hidden">
+        <div style="width:${pct};height:100%;background:linear-gradient(90deg,#7c4dff,#b89dff);border-radius:4px;transition:width 0.8s ease"></div>
+      </div>
+      <span style="color:var(--adm-muted);font-size:0.72rem;width:30px;text-align:right">${pct}</span>
+    </div>`;
+  });
+}
+
+function renderDashActivity(){
+  const el=document.getElementById('dash-activity');el.innerHTML='';
+  ACTIVITY_FEED.slice(0,5).forEach(a=>{
+    el.innerHTML+=`<div class="activity-item">
+      <div class="activity-dot ${a.color}"></div>
+      <div><div class="activity-text">${a.text}</div><div class="activity-time">${a.time}</div></div>
+    </div>`;
+  });
+}
+
+function renderDashReviews(){
+  const el=document.getElementById('dash-reviews');el.innerHTML='';
+  MOCK_REVIEWS.slice(0,2).forEach(r=>{
+    el.innerHTML+=`<div class="review-card">
+      <div class="review-top">
+        <span class="review-pet">${r.pet}</span>
+        <div><div class="review-name">${r.name}</div><div class="review-id">#${r.id}</div></div>
+        <div class="review-stars">${'★'.repeat(r.stars)}</div>
+      </div>
+      <div class="review-text">"${r.text}"</div>
+      <div class="review-date">${r.date}</div>
+    </div>`;
+  });
+}
+
+function renderUsersTable(){
+  const tbody=document.getElementById('users-table-body');tbody.innerHTML='';
+  MOCK_USERS.forEach(u=>{
+    tbody.innerHTML+=`<tr>
+      <td class="pet-cell">${u.pet}</td>
+      <td style="font-weight:500">${u.name}</td>
+      <td style="font-family:'Courier New',monospace;color:var(--adm-accent2)">#${u.code}</td>
+      <td style="color:var(--adm-muted)">${u.joined}</td>
+      <td><span class="badge ${u.status}">${u.status}</span></td>
+      <td style="color:var(--adm-muted)">${u.msgs.toLocaleString()}</td>
+    </tr>`;
+  });
+}
+
+function renderFullActivity(){
+  const el=document.getElementById('full-activity');el.innerHTML='';
+  ACTIVITY_FEED.forEach(a=>{
+    el.innerHTML+=`<div class="activity-item">
+      <div class="activity-dot ${a.color}"></div>
+      <div><div class="activity-text">${a.text}</div><div class="activity-time">${a.time}</div></div>
+    </div>`;
+  });
+}
+
+function renderReviews(){
+  const el=document.getElementById('reviews-list');el.innerHTML='';
+  MOCK_REVIEWS.forEach(r=>{
+    el.innerHTML+=`<div class="review-card">
+      <div class="review-top">
+        <span class="review-pet">${r.pet}</span>
+        <div><div class="review-name">${r.name}</div><div class="review-id">#${r.id}</div></div>
+        <div class="review-stars">${'★'.repeat(r.stars)}${'☆'.repeat(5-r.stars)}</div>
+      </div>
+      <div class="review-text">"${r.text}"</div>
+      <div class="review-date">${r.date}</div>
+    </div>`;
+  });
+}
+
+function renderFeatures(){
+  const el=document.getElementById('features-list');el.innerHTML='';
+  MOCK_FEATURES.forEach(f=>{
+    el.innerHTML+=`<div class="feature-item">
+      <div class="feature-ico">${f.ico}</div>
+      <div><div class="feature-title">${f.title}</div><div class="feature-desc">${f.desc}</div></div>
+    </div>`;
+  });
+}
+
+function renderWhy(){
+  const el=document.getElementById('why-grid');el.innerHTML='';
+  WHY_VELVET.forEach(w=>{
+    el.innerHTML+=`<div class="why-card">
+      <div class="why-icon">${w.icon}</div>
+      <div class="why-title">${w.title}</div>
+      <div class="why-desc">${w.desc}</div>
+    </div>`;
+  });
+}
+</script>
+</body>
+</html>
